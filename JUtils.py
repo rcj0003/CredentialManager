@@ -45,7 +45,7 @@ class Utils():
 
     def getCommandArguments(string):
         data = shlex.split(string)
-        return (data[0].lower(), data[1:])
+        return (data[0].lower(), data[1:] if len(data) >= 2 else [])
 
     def getSystemTime():
         return int(round(time.time() * 1000))

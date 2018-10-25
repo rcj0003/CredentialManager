@@ -4,6 +4,9 @@
 # 1.0.1
 # - Fixed a typo in the 'refreshConnection()' function.
 
+# 1.0.2
+# - Fixed an issue with command parsing in Main() and in JUtils.py.
+
 import mysql.connector as sql
 import JUtils as utils
 import hashlib as sha
@@ -615,12 +618,11 @@ def Main():
     processor = utils.CommandProcessor()
     processor.registerCommand(utils.HelpCommand(processor), ClearCommand(), ExitCommand(), CreateUserCommand(), DeleteUserCommand(), LockUserCommand(), DetailUserCommand(), SetRoleCommand(), SetNickCommand(), ResetPasswordCommand())
     while True:
-        try:
-            commandInput = utils.Utils.getCommandArguments(input(">"))
-            processor.executeCommand(commandInput[0], list(commandInput[1]))
-        except:
-            print("An error occurred while processing the command.")
-            utils.Utils.logExceptionToFile("errors.log")
+        commandInput = input(">")
+        if len(commandInput.replace(" ", "")) == 0:
+            continue
+        commandInput = utils.Utils.getCommandArguments(commandInput)
+        processor.executeCommand(commandInput[0], list(commandInput[1]))
 
 if __name__ == "__main__":
     Main()

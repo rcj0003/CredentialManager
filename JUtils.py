@@ -1,4 +1,4 @@
-# === [ JUtils v1.0.0 ] === #
+# === [ JUtils v3.0.0 ] === #
 # Created by Ryan Jones @ 2018
 
 import shlex
@@ -94,7 +94,16 @@ class HelpCommand():
     def getLongDescription(self):
         return ["Lists all commands in detail.", "Specific commands can be searched as an optional argument."]
 
+    def isEnabled(self):
+        return True
+
 class CommandProcessor():
+    def getDisabledReason(command):
+        try:
+            return command.getDisableReason()
+        except:
+            return "Unknown reason."
+        
     def __init__(self, commands = {}):
         self.commands = commands
 
@@ -109,7 +118,11 @@ class CommandProcessor():
         if len(args) < command.getMinimumArguments():
             print("Usage: () indicates an optional argument, [] indicates a required argument:\n" + command.getUsage())
         else:
-            command.execute(args)
+            if command.isEnabled():
+                command.execute(args)
+            else:
+                reason = CommandProcessor.getDisabledReason(command)
+                print(f"This command has been disabled! [{reason}]")
 
         return self
 

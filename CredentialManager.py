@@ -1,4 +1,4 @@
-# === [ Credential Manager v2.0.0 ] === #
+# === [ Credential Manager v3.0.0 ] === #
 # Created by Ryan Jones @ 2018
 
 # Versioning follows the Sematic Versioning 2.0 format: https://semver.org/
@@ -16,6 +16,11 @@
 # - Renamed the 'exit' command to 'logout'. (Backwards incompatible fix)
 # - Made some changes to how deleteById() and deleteByUsername() worked.
 
+# 3.0.0
+# - Added the 'login' command with the optional argument to auto-login from a config in the same directory.
+# - Added 'fluid' mode option, which is disabled by default. It reverts the login-logout system to the old system if enabled.
+# - The CommandProcessor class has been updated. One method has been added that is now required to be used by all commands (the '.isEnabled()' method). Another method (the '.getDisableReason()') is required if '.isEnabled()' ever returns False. (Backwards incompatible fix)
+
 import JUtils as utils
 import hashlib as sha
 import msvcrt
@@ -27,8 +32,11 @@ import os
 try:
     import mysql.connector as sql
 except:
-    print("\nThe 'MySQL Connector for Python' module is missing!\nYou can download it from here: https://dev.mysql.com/downloads/connector/python/\n")
-    sys.exit()
+    print("\n[ERROR] The 'MySQL Connector for Python' module is missing!\nYou can download it from here: https://dev.mysql.com/downloads/connector/python/\n")
+    while True:
+        pass
+
+fluidMode = False
 
 info = None
 connection = None
@@ -37,10 +45,10 @@ cursor = None
 # === Primary classes and functions == #
 
 class DatabaseInfo():
-    def getFromFile():
+    def getFromFile(database = "database"):
         try:
             data = []
-            with open("database.config", "r") as fileRead:
+            with open(f"{database}.config", "r") as fileRead:
                 fileContents = csv.reader(fileRead, delimiter=",")
                 data = list(fileContents)[0]
             return DatabaseInfo(data[0], data[1], data[2], data[3], data[4])
@@ -104,7 +112,7 @@ class CredentialManager():
         cursor.close()
 
         CredentialManager.__cache.clear()
-    
+        
     def createUser(user):
         CredentialManager.refreshConnection()
         try:
@@ -215,6 +223,19 @@ class CredentialManager():
             utils.Utils.logExceptionToFile("errors.log")
             print("An error occurred while deleting the user's data.")
 
+    def getUserInfoList():
+        CredentialManager.refreshConnection()
+        try:
+            global cursor
+            global connection
+
+            cursor.execute("SELECT id,username FROM `Credential_Table`")
+
+            return cursor.fetchall()
+        except:
+            utils.Utils.logExceptionToFile("errors.log")
+            print("An error occurred while deleting the user's data.")
+
 class User():
     def __init__(self, userId, username, nickname, role, creationDate, isLocked):
         self.cooldown = 0
@@ -275,19 +296,22 @@ def getCredential(msg, header = "", ignoreAlphanumeric = False, acceptNone = Fal
             return credential if credential != "" else None
         clearScreen()
 
-def getDatabaseCredentials():
+def getDatabaseCredentials(autologin = True, database = "database"):
     global info
-    
-    info = DatabaseInfo.getFromFile()
+
+    if autologin:
+        info = DatabaseInfo.getFromFile(database)
+    else:
+        info = None
 
     while True:
         if info == None:
-            ip = getCredential("IP Address: ", "CredentialManager [2.0.0]\nRyan Jones @ 2018\n\nPlease login to your database to continue.\n", ignoreAlphanumeric = True)
-            port = getCredential("Port Number: ", "CredentialManager [2.0.0]\nRyan Jones @ 2018\n\nPlease login to your database to continue.\n")
-            db = getCredential("Database name: ", "CredentialManager [2.0.0]\nRyan Jones @ 2018\n\nPlease login to your database to continue.\n", ignoreAlphanumeric = True)
+            ip = getCredential("IP Address: ", "CredentialManager [3.0.0]\nRyan Jones @ 2018\n\nPlease login to your database to continue.\n", ignoreAlphanumeric = True)
+            port = getCredential("Port Number: ", "CredentialManager [3.0.0]\nRyan Jones @ 2018\n\nPlease login to your database to continue.\n")
+            db = getCredential("Database name: ", "CredentialManager [3.0.0]\nRyan Jones @ 2018\n\nPlease login to your database to continue.\n", ignoreAlphanumeric = True)
         
-            username = getCredential("Username: ", "CredentialManager [2.0.0]\nRyan Jones @ 2018\n\nPlease login to your database to continue.\n")
-            pw = getCredential("Password: ", "CredentialManager [2.0.0]\nRyan Jones @ 2018\n\nPlease login to your database to continue.\n", ignoreAlphanumeric = True)
+            username = getCredential("Username: ", "CredentialManager [3.0.0]\nRyan Jones @ 2018\n\nPlease login to your database to continue.\n")
+            pw = getCredential("Password: ", "CredentialManager [3.0.0]\nRyan Jones @ 2018\n\nPlease login to your database to continue.\n", ignoreAlphanumeric = True)
 
             info = DatabaseInfo(ip, port, db, username, pw)
 
@@ -310,7 +334,7 @@ def convertStringToHash(string):
 
 def awaitConfirmation(question = "Is this ok? Y/N"):
     print(question)
-    return msvcrt.getwch() == "y"
+    return msvcrt.getwch().lower() == "y"
 
 def createUser():
     userId = ""
@@ -323,7 +347,7 @@ def createUser():
     clearScreen()
     
     while True:
-        userId = getCredential("Enter a unique user ID for your new user (16 characters max): ", "CredentialManager [2.0.0]\nRyan Jones @ 2018\n", maxSize = 16)
+        userId = getCredential("Enter a unique user ID for your new user (16 characters max): ", "CredentialManager [3.0.0]\nRyan Jones @ 2018\n", maxSize = 16)
 
         clearScreen("Checking availability...\n")
 
@@ -334,7 +358,7 @@ def createUser():
             print("This user ID is in use!\n")
 
     while True:
-        username = getCredential("Enter a unique username for your new user (16 characters max): ", "CredentialManager [2.0.0]\nRyan Jones @ 2018\n", maxSize = 16)
+        username = getCredential("Enter a unique username for your new user (16 characters max): ", "CredentialManager [3.0.0]\nRyan Jones @ 2018\n", maxSize = 16)
 
         clearScreen("Checking availability...\n")
 
@@ -344,10 +368,10 @@ def createUser():
         else:
             print("This username is in use!\n")
 
-    pwHash = convertStringToHash(getCredential("Enter a password for your new user (16 characters max): ", "CredentialManager [2.0.0]\nRyan Jones @ 2018\n", ignoreAlphanumeric = True, maxSize = 16))
+    pwHash = convertStringToHash(getCredential("Enter a password for your new user (16 characters max): ", "CredentialManager [3.0.0]\nRyan Jones @ 2018\n", ignoreAlphanumeric = True, maxSize = 16))
 
-    nickname = getCredential("(Optional) Enter a nickname for your new user (16 characters max): ", "CredentialManager [2.0.0]\nRyan Jones @ 2018\n", ignoreAlphanumeric = True, acceptNone = True, maxSize = 16)
-    role = getCredential("(Optional) Enter a role for your new user (16 characters max): ", "CredentialManager [2.0.0]\nRyan Jones @ 2018\n", ignoreAlphanumeric = True, acceptNone = True, maxSize = 16)
+    nickname = getCredential("(Optional) Enter a nickname for your new user (16 characters max): ", "CredentialManager [3.0.0]\nRyan Jones @ 2018\n", ignoreAlphanumeric = True, acceptNone = True, maxSize = 16)
+    role = getCredential("(Optional) Enter a role for your new user (16 characters max): ", "CredentialManager [3.0.0]\nRyan Jones @ 2018\n", ignoreAlphanumeric = True, acceptNone = True, maxSize = 16)
 
     locked = awaitConfirmation("Should the user's account be locked initially? Y to lock, N to leave unlocked.")
 
@@ -358,8 +382,67 @@ def createUser():
         CredentialManager.createUser(user)
         print("Operation complete!\n")
 
+def isConnected():
+    global connection
+    return connection != None and connection.is_connected()
+
 # === Commands Section === #
-class ResetPasswordCommand():
+class LoginCommand():
+    def getName(self):
+        return "login"
+
+    def execute(self, args):
+        clearScreen()
+        getDatabaseCredentials(len(args) > 0, "database" if len(args) == 0 else args[0])
+        clearScreen("CredentialManager [3.0.0]\nRyan Jones @ 2018\n\nUse the 'help' command for details on how to use commands.\n")
+        CredentialManager.setup()
+
+    def getMinimumArguments(self):
+        return 0
+    
+    def getUsage(self):
+        return "login (Credential Config)"
+    
+    def getShortDescription(self):
+        return "Logs into a database."
+    
+    def getLongDescription(self):
+        return ["Use this to log into a database.", "You can auto-login into a database by supplying an argument", "specifying a '.config' to use for credentials."]
+
+    def isEnabled(self):
+        return not isConnected()
+
+class ConnectedCommand():
+    def isEnabled(self):
+        return isConnected()
+
+    def getDisableReason(self):
+        return "Please connect to a MySQL server to use this command."
+
+class UserlistCommand(ConnectedCommand):
+    def getName(self):
+        return "userlist"
+
+    def execute(self, args):
+        print("{:^17}|{:^17}".format("Unique ID", "Username"))
+        print("-" * 35)
+        
+        for userdata in CredentialManager.getUserInfoList():
+            print(" {: <16}| {: <16}".format(userdata[0], userdata[1]))
+
+    def getMinimumArguments(self):
+        return 0
+    
+    def getUsage(self):
+        return "userlist"
+    
+    def getShortDescription(self):
+        return "Lists all users and their unique IDs."
+    
+    def getLongDescription(self):
+        return ["Lists all users and their unique IDs."]
+
+class ResetPasswordCommand(ConnectedCommand):
     def getName(self):
         return "resetpw"
 
@@ -371,7 +454,7 @@ class ResetPasswordCommand():
             print("\nThis user does not exist!\n")
             return
 
-        user.setPasswordHash(convertStringToHash(getCredential("Enter a new password for the user: (16 characters max): ", "CredentialManager [2.0.0]\nRyan Jones @ 2018\n", ignoreAlphanumeric = True, maxSize = 16)))
+        user.setPasswordHash(convertStringToHash(getCredential("Enter a new password for the user: (16 characters max): ", "CredentialManager [3.0.0]\nRyan Jones @ 2018\n", ignoreAlphanumeric = True, maxSize = 16)))
         user.setLocked(True)
 
         CredentialManager.updateUser(user)
@@ -390,7 +473,7 @@ class ResetPasswordCommand():
     def getLongDescription(self):
         return ["Resets a user's password and locks their account."]
 
-class SetRoleCommand():
+class SetRoleCommand(ConnectedCommand):
     def getName(self):
         return "setrole"
 
@@ -402,7 +485,7 @@ class SetRoleCommand():
             print("\nThis user does not exist!\n")
             return
 
-        user.setRole(getCredential("Enter a new role for the user: (16 characters max): ", "CredentialManager [2.0.0]\nRyan Jones @ 2018\n", ignoreAlphanumeric = True, acceptNone = True, maxSize = 16, clear = False))
+        user.setRole(getCredential("Enter a new role for the user: (16 characters max): ", "CredentialManager [3.0.0]\nRyan Jones @ 2018\n", ignoreAlphanumeric = True, acceptNone = True, maxSize = 16, clear = False))
 
         CredentialManager.updateUser(user)
 
@@ -420,7 +503,7 @@ class SetRoleCommand():
     def getLongDescription(self):
         return ["Sets a user's role."]
 
-class SetNickCommand():
+class SetNickCommand(ConnectedCommand):
     def getName(self):
         return "setnick"
 
@@ -432,7 +515,7 @@ class SetNickCommand():
             print("\nThis user does not exist!\n")
             return
 
-        user.setNickname(getCredential("Enter a new nickname for the user: (16 characters max): ", "CredentialManager [2.0.0]\nRyan Jones @ 2018\n", ignoreAlphanumeric = True, acceptNone = True, maxSize = 16, clear = False))
+        user.setNickname(getCredential("Enter a new nickname for the user: (16 characters max): ", "CredentialManager [3.0.0]\nRyan Jones @ 2018\n", ignoreAlphanumeric = True, acceptNone = True, maxSize = 16, clear = False))
 
         CredentialManager.updateUser(user)
 
@@ -450,7 +533,7 @@ class SetNickCommand():
     def getLongDescription(self):
         return ["Sets a user's nickname."]
 
-class DetailUserCommand():
+class DetailUserCommand(ConnectedCommand):
     def getName(self):
         return "detailuser"
 
@@ -486,7 +569,7 @@ class DetailUserCommand():
     def getLongDescription(self):
         return ["Gives you a snapshot of user data."]
 
-class LockUserCommand():
+class LockUserCommand(ConnectedCommand):
     def getName(self):
         return "lock"
 
@@ -517,7 +600,7 @@ class LockUserCommand():
     def getLongDescription(self):
         return ["Allows you to set whether or not a user is locked.", "Y locks the account, N unlocks it."]
 
-class DeleteUserCommand():
+class DeleteUserCommand(ConnectedCommand):
     def getName(self):
         return "deleteuser"
 
@@ -544,16 +627,21 @@ class DeleteUserCommand():
     def getShortDescription(self):
         return "Deletes a user from the given username."
     
-    def getLongDescription(self):2.0.0
-        return ["Deletes a user from the given username.", "Nothing happens if the username does not exist."]    
+    def getLongDescription(self):
+        return ["Deletes a user from the given username.", "Nothing happens if the username does not exist."]
 
-class LogoutCommand():
+class LogoutCommand(ConnectedCommand):
     def getName(self):
         return "logout"
 
     def execute(self, args):
         CredentialManager.gracefulExit()
-        sys.exit()
+
+        global fluidMode
+        if fluidMode:
+            sys.exit()
+        else:
+            print("\nYou have been logged out of the database.\n")
 
     def getMinimumArguments(self):
         return 0
@@ -567,12 +655,12 @@ class LogoutCommand():
     def getLongDescription(self):
         return ["Properly saves user data, logs out, and exits gracefully.", "You should always use this command upon completion of your tasks."]
 
-class CreateUserCommand():
+class CreateUserCommand(ConnectedCommand):
     def getName(self):
         return "createuser"
 
     def execute(self, args):
-        createUser()2.0.0
+        createUser()
 
     def getMinimumArguments(self):
         return 0
@@ -585,8 +673,7 @@ class CreateUserCommand():
     
     def getLongDescription(self):
         return ["Starts a prompt to create a new user.", "The prompt is relatively secure, as the screen is cleared", "as each credential is entered."]
-
-
+    
 class ClearCommand():
     def getName(self):
         return "clear"
@@ -607,6 +694,9 @@ class ClearCommand():
     def getLongDescription(self):
         return ["Clears the console."]
 
+    def isEnabled(self):
+        return True
+
 # === Main Section === #
 
 def Main():
@@ -614,14 +704,20 @@ def Main():
     if "idlelib" in sys.modules:
         print("\n===[Compatibility Error]===\nThis program is only compatible when run through Windows terminal.\n")
         sys.exit()
-        
-    getDatabaseCredentials()
-    CredentialManager.setup()
-    
-    print("CredentialManager [2.0.0]\nRyan Jones @ 2018\n\nUse the 'help' command for details on how to use commands.\n")
-    
+
     processor = utils.CommandProcessor()
-    processor.registerCommand(utils.HelpCommand(processor), ClearCommand(), CreateUserCommand(), DeleteUserCommand(), LockUserCommand(), DetailUserCommand(), SetRoleCommand(), SetNickCommand(), ResetPasswordCommand(), LogoutCommand())
+    processor.registerCommand(utils.HelpCommand(processor), ClearCommand(), CreateUserCommand(), DeleteUserCommand(), LockUserCommand(), DetailUserCommand(), SetRoleCommand(), SetNickCommand(), ResetPasswordCommand(), LogoutCommand(), UserlistCommand())
+
+    global fluidMode
+        
+    if fluidMode:
+        getDatabaseCredentials()
+        CredentialManager.setup()
+    else:
+        processor.registerCommand(LoginCommand())
+    
+    print("CredentialManager [3.0.0]\nRyan Jones @ 2018\n\nUse the 'help' command for details on how to use commands.\n")
+    
     while True:
         commandInput = input(">")
         if len(commandInput.replace(" ", "")) == 0:

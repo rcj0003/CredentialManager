@@ -16,7 +16,14 @@
 - Renamed the 'exit' command to 'logout'. (Backwards incompatible fix)
 - Made some changes to how deleteById() and deleteByUsername() worked.
 
-### 3.0.0
+### The Sessions Update (3.0.0)
 - Added the 'login' command with the optional argument to auto-login from a config in the same directory.
 - Added 'fluid' mode option, which is disabled by default. It reverts the login-logout system to the old system if enabled.
 - The CommandProcessor class has been updated. One method has been added that is now required to be used by all commands (the '.isEnabled()' method). Another method (the '.getDisableReason()') is required if '.isEnabled()' ever returns False. (Backwards incompatible fix)
+
+### Fluidity Update (3.1.0)
+- Re-added the 'exit' command as a new, separate functioning command that closes the terminal.
+- Exceptions that occur are now logged in the isIdAvailable() method.
+- The login command now returns a proper message when the command is not executable (instead of saying unknown reason).
+- You can now specify "{database}.config" or "{database}" with the login command to load the "{database}.config" file. Ex: "login database" or "login database.config" uses "database.config" as its config.
+- Other miscelleanous bug fixes.

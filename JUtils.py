@@ -1,4 +1,4 @@
-# === [ JUtils v3.0.0 ] === #
+# === [ JUtils ] === #
 # Created by Ryan Jones @ 2018
 
 import shlex
@@ -66,7 +66,7 @@ class HelpCommand():
         if len(args) == 0:
             print("\n===[Commands Help]===")
             for command in self.processor.getRegisteredCommands():
-                name = command.getName().title()
+                name = command.getName().lower()
                 desc = command.getShortDescription()
                 print(f"{name}: {desc}")
             print()
@@ -76,7 +76,7 @@ class HelpCommand():
             print("\n===[Commands Help]===")
             print(str(len(results)) + f" results were found with the search term \'{search}\'.\n")
             for command in results:
-                name = command.getName().title()
+                name = command.getName().lower()
                 usage = command.getUsage()
                 arguments = str(command.getMinimumArguments())
                 desc = "\n".join(command.getLongDescription())

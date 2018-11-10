@@ -16,22 +16,27 @@
 # - Renamed the 'exit' command to 'logout'. (Backwards incompatible fix)
 # - Made some changes to how deleteById() and deleteByUsername() worked.
 
-# 3.0.0
+# The Sessions Update (3.0.0)
 # - Added the 'login' command with the optional argument to auto-login from a config in the same directory.
 # - Added 'fluid' mode option, which is disabled by default. It reverts the login-logout system to the old system if enabled.
-# - The CommandProcessor class has been updated. One method has been added that is now required to be used by all commands (the '.isEnabled()' method). Another method (the '.getDisableReason()') is required if '.isEnabled()' ever returns False. (Backwards incompatible fix)
+# - The CommandProcessor class has been updated. One method has been added that is now required to be used by all commands (the '.isEnabled()' method). Another method (the '.getDisabledReason()') is required if '.isEnabled()' ever returns False. (Backwards incompatible fix)
 
-# 3.1.0
+# Fluidity Update (3.1.0)
 # - Added the 'exit' command.
 # - Exceptions that occur are now logged in the isIdAvailable() method.
 # - The login command now returns a proper message when the command is not executable (instead of saying unknown reason).
 # - You can now specify "{database}.config" or "{database}" with the login command to load the "{database}.config" file. Ex: "login database" or "login database.config" uses "database.config" as its config.
 # - Other miscelleanous bug fixes.
 
-import JUtils as utils
-import hashlib as sha
+# Power Update (4.0.0)
+# - Switched from JUtils to JUtils2
+    # - Added numerous commands
+    # - Removed some unnecessary functions that are now covered by JUtils2
+    # - Added the ability to use scripts, variables, etc.
+    # - The transition is currently incomplete, expect more integration with JUtils2 in later updates
+
+import JUtils2 as jutils
 import msvcrt
-import datetime
 import csv
 import sys
 import os
@@ -83,7 +88,7 @@ class DatabaseInfo():
             if connection != None:
                 connection.close()
                 connection = None
-            utils.Utils.logExceptionToFile("errors.log")
+            jutils.Utilities.logTracebackToFile("errors.log")
             return False
 
 class CredentialManager():
@@ -105,7 +110,7 @@ class CredentialManager():
         except:
             connection.close()
             info.attemptConnection()
-            utils.Utils.logExceptionToFile("errors.log")
+            jutils.Utilities.logTracebackToFile("errors.log")
 
     def gracefulExit():
         global connection
@@ -128,7 +133,7 @@ class CredentialManager():
             cursor.execute("INSERT INTO `Credential_Table` (id,username,pwhash,nickname,role,creation,locked) VALUES (%(id)s,%(username)s,%(pwhash)s,%(nickname)s,%(role)s,%(creation)s,%(locked)s)", user.getDictionaryData(True))
             connection.commit()
         except:
-            utils.Utils.logExceptionToFile("errors.log")
+            jutils.Utilities.logTracebackToFile("errors.log")
             print("An unknown error occurred.")
 
     def isIdAvailable(userId):
@@ -138,7 +143,7 @@ class CredentialManager():
             cursor.execute("SELECT * FROM `Credential_Table` WHERE id=%(id)s LIMIT 1", {"id": userId})
             return len(cursor.fetchall()) == 0
         except:
-            utils.Utils.logExceptionToFile("errors.log")
+            jutils.Utilities.logTracebackToFile("errors.log")
             return False
 
     def isUsernameAvailable(username):
@@ -148,7 +153,7 @@ class CredentialManager():
             cursor.execute("SELECT * FROM `Credential_Table` WHERE username=%(username)s LIMIT 1", {"username": username})
             return len(cursor.fetchall()) == 0
         except:
-            utils.Utils.logExceptionToFile("errors.log")
+            jutils.Utilities.logTracebackToFile("errors.log")
             return False
 
     def deleteById(userId):
@@ -173,7 +178,7 @@ class CredentialManager():
 
             return resultsToUser(cursor.fetchall()[0])
         except:
-            utils.Utils.logExceptionToFile("errors.log")
+            jutils.Utilities.logTracebackToFile("errors.log")
             return None
 
     def getUserByName(username, useCache = True):
@@ -191,7 +196,7 @@ class CredentialManager():
 
             return CredentialManager.resultsToUser(cursor.fetchall()[0])
         except:
-            utils.Utils.logExceptionToFile("errors.log")
+            jutils.Utilities.logTracebackToFile("errors.log")
             return None
 
     def resultsToUser(results):
@@ -213,7 +218,7 @@ class CredentialManager():
 
             connection.commit()
         except:
-            utils.Utils.logExceptionToFile("errors.log")
+            jutils.Utilities.logTracebackToFile("errors.log")
             print("An error occurred when saving the record.")
 
     def deleteUser(user):
@@ -228,7 +233,7 @@ class CredentialManager():
 
             CredentialManager.__cache.pop(user.getUniqueID())
         except:
-            utils.Utils.logExceptionToFile("errors.log")
+            jutils.Utilities.logTracebackToFile("errors.log")
             print("An error occurred while deleting the user's data.")
 
     def getUserInfoList():
@@ -241,7 +246,7 @@ class CredentialManager():
 
             return cursor.fetchall()
         except:
-            utils.Utils.logExceptionToFile("errors.log")
+            jutils.Utilities.logTracebackToFile("errors.log")
             print("An error occurred while deleting the user's data.")
 
 class User():
@@ -339,9 +344,6 @@ def clearScreen(msg = None):
     if msg != None:
         print(msg)
 
-def convertStringToHash(string):
-    return sha.sha256(string.encode(encoding="UTF-16")).hexdigest()
-
 def awaitConfirmation(question = "Is this ok? Y/N"):
     print(question)
     return msvcrt.getwch().lower() == "y"
@@ -378,7 +380,7 @@ def createUser():
         else:
             print("This username is in use!\n")
 
-    pwHash = convertStringToHash(getCredential("Enter a password for your new user (16 characters max): ", "CredentialManager [3.1.0]\nRyan Jones @ 2018\n", ignoreAlphanumeric = True, maxSize = 16))
+    pwHash = jutils.Utilities.convertStringToHash(getCredential("Enter a password for your new user (16 characters max): ", "CredentialManager [3.1.0]\nRyan Jones @ 2018\n", ignoreAlphanumeric = True, maxSize = 16))
 
     nickname = getCredential("(Optional) Enter a nickname for your new user (16 characters max): ", "CredentialManager [3.1.0]\nRyan Jones @ 2018\n", ignoreAlphanumeric = True, acceptNone = True, maxSize = 16)
     role = getCredential("(Optional) Enter a role for your new user (16 characters max): ", "CredentialManager [3.1.0]\nRyan Jones @ 2018\n", ignoreAlphanumeric = True, acceptNone = True, maxSize = 16)
@@ -387,7 +389,7 @@ def createUser():
 
     if awaitConfirmation("Should the new user's data be applied to the database? Y to save their data, N to discard it."):
         print("Saving to database...\n")
-        user = User(userId, username, nickname, role, utils.Utils.getSystemTime(), locked)
+        user = User(userId, username, nickname, role, jutils.Utilities.getSystemTime(), locked)
         user.setPasswordHash(pwHash)
         CredentialManager.createUser(user)
         print("Operation complete!\n")
@@ -419,7 +421,7 @@ class ExitCommand():
     def isEnabled(self):
         return not isConnected()
 
-    def getDisableReason(self):
+    def getDisabledReason(self):
         return "You must be logged out to use this command."
 
 class LoginCommand():
@@ -447,14 +449,14 @@ class LoginCommand():
     def isEnabled(self):
         return not isConnected()
 
-    def getDisableReason(self):
+    def getDisabledReason(self):
         return "You cannot log into another server whilest being connected to another!"
 
 class ConnectedCommand():
     def isEnabled(self):
         return isConnected()
 
-    def getDisableReason(self):
+    def getDisabledReason(self):
         return "Please connect to a MySQL server to use this command."
 
 class UserlistCommand(ConnectedCommand):
@@ -590,7 +592,7 @@ class DetailUserCommand(ConnectedCommand):
             print("Nickname:      " + user.getNickname())
         if user.getRole() != None:
             print("Role:          " + user.getRole() + "\n")
-        print("Creation Date: " + str(datetime.datetime.fromtimestamp(user.getCreationDate() / 1000)))
+        print("Creation Date: " + str(jutils.Utilities.getStringFromTimestamp(user.getCreationDate() / 1000)))
         print("Locked?        " + str("Yes" if user.isLocked() else "No"))
 
         print()
@@ -735,32 +737,16 @@ class ClearCommand():
         return True
 
 # === Main Section === #
-
-def Main():
-    # This script doesn't really work properly from IDLE thanks to some strange behavior from it. I had to do a bit of research and experimentation for this.
+if __name__ == "__main__":
     if "idlelib" in sys.modules:
         print("\n===[Compatibility Error]===\nThis program is only compatible when run through Windows terminal.\n")
         sys.exit()
+    commandList = [ClearCommand(), CreateUserCommand(), DeleteUserCommand(), LockUserCommand(), SetRoleCommand(), SetNickCommand(), ResetPasswordCommand(), UserlistCommand(), DetailUserCommand(), ExitCommand(), LogoutCommand()]
 
-    processor = utils.CommandProcessor()
-    processor.registerCommand(utils.HelpCommand(processor), ClearCommand(), CreateUserCommand(), DeleteUserCommand(), LockUserCommand(), SetRoleCommand(), SetNickCommand(), ResetPasswordCommand(), UserlistCommand(), DetailUserCommand(), ExitCommand(), LogoutCommand())
-
-    global fluidMode
-        
     if fluidMode:
         getDatabaseCredentials()
         CredentialManager.setup()
     else:
-        processor.registerCommand(LoginCommand())
+        commandList.append(LoginCommand())
     
-    print("CredentialManager [3.1.0]\nRyan Jones @ 2018\n\nUse the 'help' command for details on how to use commands.\n")
-    
-    while True:
-        commandInput = input(">")
-        if len(commandInput.replace(" ", "")) == 0:
-            continue
-        commandInput = utils.Utils.getCommandArguments(commandInput)
-        processor.executeCommand(commandInput[0], list(commandInput[1]))
-
-if __name__ == "__main__":
-    Main()
+    jutils.runTerminal("CredentialManager [3.1.0]\nRyan Jones @ 2018\n\nUse the 'help' command for details on how to use commands.\n", commandList)

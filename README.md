@@ -27,3 +27,10 @@
 - The login command now returns a proper message when the command is not executable (instead of saying unknown reason).
 - You can now specify "{database}.config" or "{database}" with the login command to load the "{database}.config" file. Ex: "login database" or "login database.config" uses "database.config" as its config.
 - Other miscelleanous bug fixes.
+
+### Power Update (4.0.0)
+- Switched from JUtils to JUtils2
+    - Added numerous commands
+    - Removed some unnecessary functions that are now covered by JUtils2
+    - Added the ability to use scripts, variables, etc.
+    - The transition is currently incomplete, expect more integration with JUtils2 in later updates

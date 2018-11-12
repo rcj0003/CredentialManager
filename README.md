@@ -34,3 +34,8 @@
     - Removed some unnecessary functions that are now covered by JUtils2
     - Added the ability to use scripts, variables, etc.
     - The transition is currently incomplete, expect more integration with JUtils2 in later updates
+
+### 4.1.0
+- Some commands now store results as variables.
+- Updated to JUtils2 v0.5.0.
+- Bug fixes.

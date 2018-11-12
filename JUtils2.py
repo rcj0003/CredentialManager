@@ -1,17 +1,20 @@
 # ==={ JUtils 2 by Ryan Jones }=== #
-# Release Date: 11/8/2018
+# Release Date: 11/11/2018
 
+import hashlib as sha
 import datetime
 import time
 import traceback
 import shlex
 import sys
 
+storedVariables = {}
+
 class Compatibility():
     """Provides simple methods to aid with compatibility."""
     def getVersion():
         """Returns a tuple providing the major, minor, patch, and pre-release identifier like so: (Major, Minor, Patch, Identifier)"""
-        return (0, 4, 0, "")
+        return (0, 5, 0, "")
 
     def getVersionString():
         """Returns the version in the following format: Major.Minor.Patch(-Pre-release Indetifier)\nThe identifier may be absent if the release is a full release."""
@@ -238,13 +241,38 @@ class CommandProcessor2():
     
     def getCommandsByName(self, name):
         """Returns a list of commands that contain 'name' in their name."""
-        return AdvancedMap(Utilities.createEmbeddedList(self.commands)).filterResults(lambda x: name.lower() in x[0]).mapResults(lambda x: x[1]).getResults()
+        return AdvancedMap(Utilities.createEmbeddedList(self.commands.keys(), self.commands.values())).filterResults(lambda x: name.lower() in x[0]).mapResults(lambda x: x[1]).getResults()
 
     def getRegisteredCommands(self):
         """Returns a list of all registered commands."""
         return list(self.commands.values())
 
 # === Standalone Script === #
+class JUtilsCommand():
+    def getName(self):
+        return "jutils"
+
+    def execute(self, args):
+        print("\n===[JUtils2]===")
+        print("Author: Ryan Jones")
+        print("Version: " + Compatibility.getVersionString())
+        print()
+
+    def getMinimumArguments(self):
+        return 0
+    
+    def getUsage(self):
+        return "jutils"
+    
+    def getShortDescription(self):
+        return "Gives specific information about the JUtils2 currently being run."
+    
+    def getLongDescription(self):
+        return ["Gives specific information about the JUtils2 currently being run."]
+
+    def isEnabled(self):
+        return True
+
 class HelpCommand():
     def __init__(self, processor):
         self.processor = processor
@@ -541,6 +569,35 @@ class ClearMemoryCommand():
     def isEnabled(self):
         return True
 
+class VariablesCommand():
+    def getName(self):
+        return "vars"
+
+    def execute(self, args):
+        global storedVariables
+        print("{:^30}|{:^30}".format("Variable", "Value"))
+        print("-" * 61)
+        for variable in storedVariables.keys():
+            displayVariable = variable if len(variable) < 28 else variable[:25] + "..."
+            value = str(storedVariables[variable])
+            displayValue = value if len(value) < 28 else variable[:25] + "..."
+            print(" {: <29}| {: <29}".format(displayVariable, displayValue))
+
+    def getMinimumArguments(self):
+        return 0
+    
+    def getUsage(self):
+        return "vars"
+    
+    def getShortDescription(self):
+        return "Prints a list of all stored variables and their values."
+    
+    def getLongDescription(self):
+        return ["Prints a list of all stored variables and their values."]
+
+    def isEnabled(self):
+        return True
+
 class ExitCommand():
     def getName(self):
         return "exit"
@@ -568,7 +625,7 @@ def runTerminal(header = "", commands = []):
     storedVariables = {}
     processor = CommandProcessor2()
     print(header)
-    processor.registerCommands([HelpCommand(processor), RunScriptCommand(processor), DefineCommand(), DefineIntCommand(), CompareCommand(), AddCommand(), PrintCommand(), ConditionalCommand(processor), WaitCommand(), ClearMemoryCommand(), ExitCommand()] + commands)
+    processor.registerCommands([JUtilsCommand(), HelpCommand(processor), RunScriptCommand(processor), DefineCommand(), DefineIntCommand(), CompareCommand(), AddCommand(), PrintCommand(), ConditionalCommand(processor), WaitCommand(), VariablesCommand(), ClearMemoryCommand(), ExitCommand()] + commands)
     while True:
         parsedCommand = Utilities.getParsedInput("> ")
         processor.executeCommand(parsedCommand[0], parsedCommand[1])

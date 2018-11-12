@@ -1,4 +1,4 @@
-# === [ Credential Manager v3.1.0 ] === #
+# === [ Credential Manager v4.1.0 ] === #
 # Created by Ryan Jones @ 2018
 
 # Versioning follows the Sematic Versioning 2.0 format: https://semver.org/
@@ -34,6 +34,11 @@
     # - Removed some unnecessary functions that are now covered by JUtils2
     # - Added the ability to use scripts, variables, etc.
     # - The transition is currently incomplete, expect more integration with JUtils2 in later updates
+
+# 4.1.0
+# - Some commands now store results as variables.
+# - Updated to JUtils2 v0.5.0.
+# - Bug fixes.
 
 import JUtils2 as jutils
 import msvcrt
@@ -305,28 +310,28 @@ def getCredential(msg, header = "", ignoreAlphanumeric = False, acceptNone = Fal
     while True:
         print(header)
         credential = input(msg)
-        if (maxSize == -1 or (len(credential) <= maxSize)) and (credential.isalnum() or ignoreAlphanumeric) and (acceptNone or credential != ""):
+        if isCredential(credential, ignoreAlphanumeric, acceptNone, maxSize):
             if clearAfter:
                 clearScreen()
             return credential if credential != "" else None
         clearScreen()
 
-def getDatabaseCredentials(autologin = True, database = "database"):
+def isCredential(credential, ignoreAlphanumeric, acceptNone, maxSize):
+    return (maxSize == -1 or (len(credential) <= maxSize)) and (credential.isalnum() or ignoreAlphanumeric) and (acceptNone or credential != "")
+
+def getDatabaseCredentials(autologin = True, file = "database"):
     global info
 
-    if autologin:
-        info = DatabaseInfo.getFromFile(database)
-    else:
-        info = None
+    info = DatabaseInfo.getFromFile(file) if autologin else None
 
     while True:
         if info == None:
-            ip = getCredential("IP Address: ", "CredentialManager [3.1.0]\nRyan Jones @ 2018\n\nPlease login to your database to continue.\n", ignoreAlphanumeric = True)
-            port = getCredential("Port Number: ", "CredentialManager [3.1.0]\nRyan Jones @ 2018\n\nPlease login to your database to continue.\n")
-            db = getCredential("Database name: ", "CredentialManager [3.1.0]\nRyan Jones @ 2018\n\nPlease login to your database to continue.\n", ignoreAlphanumeric = True)
+            ip = getCredential("IP Address: ", "CredentialManager [4.1.0]\nRyan Jones @ 2018\n\nPlease login to your database to continue.\n", ignoreAlphanumeric = True)
+            port = getCredential("Port Number: ", "CredentialManager [4.1.0]\nRyan Jones @ 2018\n\nPlease login to your database to continue.\n")
+            db = getCredential("Database name: ", "CredentialManager [4.1.0]\nRyan Jones @ 2018\n\nPlease login to your database to continue.\n", ignoreAlphanumeric = True)
         
-            username = getCredential("Username: ", "CredentialManager [3.1.0]\nRyan Jones @ 2018\n\nPlease login to your database to continue.\n")
-            pw = getCredential("Password: ", "CredentialManager [3.1.0]\nRyan Jones @ 2018\n\nPlease login to your database to continue.\n", ignoreAlphanumeric = True)
+            username = getCredential("Username: ", "CredentialManager [4.1.0]\nRyan Jones @ 2018\n\nPlease login to your database to continue.\n")
+            pw = getCredential("Password: ", "CredentialManager [4.1.0]\nRyan Jones @ 2018\n\nPlease login to your database to continue.\n", ignoreAlphanumeric = True)
 
             info = DatabaseInfo(ip, port, db, username, pw)
 
@@ -359,7 +364,7 @@ def createUser():
     clearScreen()
     
     while True:
-        userId = getCredential("Enter a unique user ID for your new user (16 characters max): ", "CredentialManager [3.1.0]\nRyan Jones @ 2018\n", maxSize = 16)
+        userId = getCredential("Enter a unique user ID for your new user (16 characters max): ", "CredentialManager [4.1.0]\nRyan Jones @ 2018\n", maxSize = 16)
 
         clearScreen("Checking availability...\n")
 
@@ -370,7 +375,7 @@ def createUser():
             print("This user ID is in use!\n")
 
     while True:
-        username = getCredential("Enter a unique username for your new user (16 characters max): ", "CredentialManager [3.1.0]\nRyan Jones @ 2018\n", maxSize = 16)
+        username = getCredential("Enter a unique username for your new user (16 characters max): ", "CredentialManager [4.1.0]\nRyan Jones @ 2018\n", maxSize = 16)
 
         clearScreen("Checking availability...\n")
 
@@ -380,10 +385,10 @@ def createUser():
         else:
             print("This username is in use!\n")
 
-    pwHash = jutils.Utilities.convertStringToHash(getCredential("Enter a password for your new user (16 characters max): ", "CredentialManager [3.1.0]\nRyan Jones @ 2018\n", ignoreAlphanumeric = True, maxSize = 16))
+    pwHash = jutils.Utilities.convertStringToHash(getCredential("Enter a password for your new user (16 characters max): ", "CredentialManager [4.1.0]\nRyan Jones @ 2018\n", ignoreAlphanumeric = True, maxSize = 16))
 
-    nickname = getCredential("(Optional) Enter a nickname for your new user (16 characters max): ", "CredentialManager [3.1.0]\nRyan Jones @ 2018\n", ignoreAlphanumeric = True, acceptNone = True, maxSize = 16)
-    role = getCredential("(Optional) Enter a role for your new user (16 characters max): ", "CredentialManager [3.1.0]\nRyan Jones @ 2018\n", ignoreAlphanumeric = True, acceptNone = True, maxSize = 16)
+    nickname = getCredential("(Optional) Enter a nickname for your new user (16 characters max): ", "CredentialManager [4.1.0]\nRyan Jones @ 2018\n", ignoreAlphanumeric = True, acceptNone = True, maxSize = 16)
+    role = getCredential("(Optional) Enter a role for your new user (16 characters max): ", "CredentialManager [4.1.0]\nRyan Jones @ 2018\n", ignoreAlphanumeric = True, acceptNone = True, maxSize = 16)
 
     locked = awaitConfirmation("Should the user's account be locked initially? Y to lock, N to leave unlocked.")
 
@@ -431,8 +436,9 @@ class LoginCommand():
     def execute(self, args):
         clearScreen()
         getDatabaseCredentials(len(args) > 0, "database" if len(args) == 0 else args[0])
-        clearScreen("CredentialManager [3.1.0]\nRyan Jones @ 2018\n\nUse the 'help' command for details on how to use commands.\n")
+        clearScreen("CredentialManager [4.1.0]\nRyan Jones @ 2018\n\nUse the 'help' command for details on how to use commands.\n")
         CredentialManager.setup()
+        jutils.storedVariables.update({"logged-in": "true"})
 
     def getMinimumArguments(self):
         return 0
@@ -494,7 +500,7 @@ class ResetPasswordCommand(ConnectedCommand):
             print("\nThis user does not exist!\n")
             return
 
-        user.setPasswordHash(convertStringToHash(getCredential("Enter a new password for the user: (16 characters max): ", "CredentialManager [3.1.0]\nRyan Jones @ 2018\n", ignoreAlphanumeric = True, maxSize = 16)))
+        user.setPasswordHash(convertStringToHash(getCredential("Enter a new password for the user: (16 characters max): ", "CredentialManager [4.1.0]\nRyan Jones @ 2018\n", ignoreAlphanumeric = True, maxSize = 16)))
         user.setLocked(True)
 
         CredentialManager.updateUser(user)
@@ -525,7 +531,7 @@ class SetRoleCommand(ConnectedCommand):
             print("\nThis user does not exist!\n")
             return
 
-        user.setRole(getCredential("Enter a new role for the user: (16 characters max): ", "CredentialManager [3.1.0]\nRyan Jones @ 2018\n", ignoreAlphanumeric = True, acceptNone = True, maxSize = 16, clearAfter = False))
+        user.setRole(getCredential("Enter a new role for the user: (16 characters max): ", "CredentialManager [4.1.0]\nRyan Jones @ 2018\n", ignoreAlphanumeric = True, acceptNone = True, maxSize = 16, clearAfter = False))
 
         CredentialManager.updateUser(user)
 
@@ -555,7 +561,7 @@ class SetNickCommand(ConnectedCommand):
             print("\nThis user does not exist!\n")
             return
 
-        user.setNickname(getCredential("Enter a new nickname for the user: (16 characters max): ", "CredentialManager [3.1.0]\nRyan Jones @ 2018\n", ignoreAlphanumeric = True, acceptNone = True, maxSize = 16, clearAfter = False))
+        user.setNickname(getCredential("Enter a new nickname for the user: (16 characters max): ", "CredentialManager [4.1.0]\nRyan Jones @ 2018\n", ignoreAlphanumeric = True, acceptNone = True, maxSize = 16, clearAfter = False))
 
         CredentialManager.updateUser(user)
 
@@ -592,8 +598,10 @@ class DetailUserCommand(ConnectedCommand):
             print("Nickname:      " + user.getNickname())
         if user.getRole() != None:
             print("Role:          " + user.getRole() + "\n")
-        print("Creation Date: " + str(jutils.Utilities.getStringFromTimestamp(user.getCreationDate() / 1000)))
-        print("Locked?        " + str("Yes" if user.isLocked() else "No"))
+        print("Creation Date: " + jutils.Utilities.getStringFromTimestamp(user.getCreationDate()))
+        print("Locked?        " + "Yes" if user.isLocked() else "No")
+        
+        jutils.storedVariables.update({"username": user.getUsername(), "unique-id": user.getUniqueID(), "nickname": user.getNickname() if user.getNickname() != None else "", "role": user.getRole() if user.getRole() != None else "", "creation-timestamp": jutils.Utilities.getStringFromTimestamp(user.getCreationDate()), "locked": "Yes" if user.isLocked() else "No"})
 
         print()
 
@@ -676,11 +684,11 @@ class LogoutCommand(ConnectedCommand):
 
     def execute(self, args):
         CredentialManager.gracefulExit()
-
         global fluidMode
         if fluidMode:
             sys.exit()
         else:
+            jutils.storedVariables.update({"logged-in": "false"})
             print("\nYou have been logged out of the database.\n")
 
     def getMinimumArguments(self):
@@ -748,5 +756,6 @@ if __name__ == "__main__":
         CredentialManager.setup()
     else:
         commandList.append(LoginCommand())
-    
-    jutils.runTerminal("CredentialManager [3.1.0]\nRyan Jones @ 2018\n\nUse the 'help' command for details on how to use commands.\n", commandList)
+
+    jutils.storedVariables.update({"logged-in": "false"})
+    jutils.runTerminal("CredentialManager [4.1.0]\nRyan Jones @ 2018\n\nUse the 'help' command for details on how to use commands.\n", commandList)

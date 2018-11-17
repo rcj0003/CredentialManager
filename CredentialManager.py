@@ -1,4 +1,4 @@
-# === [ Credential Manager v4.1.0 ] === #
+# === [ Credential Manager v5.0.0-alpha ] === #
 # Created by Ryan Jones @ 2018
 
 # Versioning follows the Sematic Versioning 2.0 format: https://semver.org/
@@ -40,6 +40,11 @@
 # - Updated to JUtils2 v0.5.0.
 # - Bug fixes.
 
+# 5.0.0-alpha
+# - Fluid-mode has been removed.
+# - Updated to JUtils2 0.8.0.
+# - There is a slight change in how user data is saved when gracefully closing the connection.
+
 import JUtils2 as jutils
 import msvcrt
 import csv
@@ -52,8 +57,6 @@ except:
     print("\n[ERROR] The 'MySQL Connector for Python' module is missing!\nYou can download it from here: https://dev.mysql.com/downloads/connector/python/\n")
     while True:
         pass
-
-fluidMode = False
 
 info = None
 connection = None
@@ -122,8 +125,7 @@ class CredentialManager():
         global cursor
         
         # Save all cached user data.
-        for user in CredentialManager.__cache.values():
-            CredentialManager.updateUser(user)
+        AdvancedMap(CredentialManager.__cache.values()).forEach(CredentialManager.updateUser)
 
         connection.close()
         cursor.close()
@@ -176,11 +178,10 @@ class CredentialManager():
             return CredentialManager.__cache[userId]
         
         CredentialManager.refreshConnection()
+        
         try:
             global cursor
-            
             cursor.execute("SELECT * FROM `Credential_Table` WHERE id=%(id)s LIMIT 1", {"id": userId})
-
             return resultsToUser(cursor.fetchall()[0])
         except:
             jutils.Utilities.logTracebackToFile("errors.log")
@@ -196,9 +197,7 @@ class CredentialManager():
         
         try:
             global cursor
-            
             cursor.execute("SELECT * FROM `Credential_Table` WHERE username=%(username)s LIMIT 1", {"username": username})
-
             return CredentialManager.resultsToUser(cursor.fetchall()[0])
         except:
             jutils.Utilities.logTracebackToFile("errors.log")
@@ -233,9 +232,7 @@ class CredentialManager():
             global connection
 
             cursor.execute("DELETE FROM `Credential_Table` WHERE id = %(id)s", {"id": user.getUniqueID()})
-
             connection.commit()
-
             CredentialManager.__cache.pop(user.getUniqueID())
         except:
             jutils.Utilities.logTracebackToFile("errors.log")
@@ -326,12 +323,12 @@ def getDatabaseCredentials(autologin = True, file = "database"):
 
     while True:
         if info == None:
-            ip = getCredential("IP Address: ", "CredentialManager [4.1.0]\nRyan Jones @ 2018\n\nPlease login to your database to continue.\n", ignoreAlphanumeric = True)
-            port = getCredential("Port Number: ", "CredentialManager [4.1.0]\nRyan Jones @ 2018\n\nPlease login to your database to continue.\n")
-            db = getCredential("Database name: ", "CredentialManager [4.1.0]\nRyan Jones @ 2018\n\nPlease login to your database to continue.\n", ignoreAlphanumeric = True)
+            ip = getCredential("IP Address: ", "CredentialManager [5.0.0-alpha]\nRyan Jones @ 2018\n\nPlease login to your database to continue.\n", ignoreAlphanumeric = True)
+            port = getCredential("Port Number: ", "CredentialManager [5.0.0-alpha]\nRyan Jones @ 2018\n\nPlease login to your database to continue.\n")
+            db = getCredential("Database name: ", "CredentialManager [5.0.0-alpha]\nRyan Jones @ 2018\n\nPlease login to your database to continue.\n", ignoreAlphanumeric = True)
         
-            username = getCredential("Username: ", "CredentialManager [4.1.0]\nRyan Jones @ 2018\n\nPlease login to your database to continue.\n")
-            pw = getCredential("Password: ", "CredentialManager [4.1.0]\nRyan Jones @ 2018\n\nPlease login to your database to continue.\n", ignoreAlphanumeric = True)
+            username = getCredential("Username: ", "CredentialManager [5.0.0-alpha]\nRyan Jones @ 2018\n\nPlease login to your database to continue.\n")
+            pw = getCredential("Password: ", "CredentialManager [5.0.0-alpha]\nRyan Jones @ 2018\n\nPlease login to your database to continue.\n", ignoreAlphanumeric = True)
 
             info = DatabaseInfo(ip, port, db, username, pw)
 
@@ -364,7 +361,7 @@ def createUser():
     clearScreen()
     
     while True:
-        userId = getCredential("Enter a unique user ID for your new user (16 characters max): ", "CredentialManager [4.1.0]\nRyan Jones @ 2018\n", maxSize = 16)
+        userId = getCredential("Enter a unique user ID for your new user (16 characters max): ", "CredentialManager [5.0.0-alpha]\nRyan Jones @ 2018\n", maxSize = 16)
 
         clearScreen("Checking availability...\n")
 
@@ -375,7 +372,7 @@ def createUser():
             print("This user ID is in use!\n")
 
     while True:
-        username = getCredential("Enter a unique username for your new user (16 characters max): ", "CredentialManager [4.1.0]\nRyan Jones @ 2018\n", maxSize = 16)
+        username = getCredential("Enter a unique username for your new user (16 characters max): ", "CredentialManager [5.0.0-alpha]\nRyan Jones @ 2018\n", maxSize = 16)
 
         clearScreen("Checking availability...\n")
 
@@ -385,10 +382,10 @@ def createUser():
         else:
             print("This username is in use!\n")
 
-    pwHash = jutils.Utilities.convertStringToHash(getCredential("Enter a password for your new user (16 characters max): ", "CredentialManager [4.1.0]\nRyan Jones @ 2018\n", ignoreAlphanumeric = True, maxSize = 16))
+    pwHash = jutils.Utilities.convertStringToHash(getCredential("Enter a password for your new user (16 characters max): ", "CredentialManager [5.0.0-alpha]\nRyan Jones @ 2018\n", ignoreAlphanumeric = True, maxSize = 16))
 
-    nickname = getCredential("(Optional) Enter a nickname for your new user (16 characters max): ", "CredentialManager [4.1.0]\nRyan Jones @ 2018\n", ignoreAlphanumeric = True, acceptNone = True, maxSize = 16)
-    role = getCredential("(Optional) Enter a role for your new user (16 characters max): ", "CredentialManager [4.1.0]\nRyan Jones @ 2018\n", ignoreAlphanumeric = True, acceptNone = True, maxSize = 16)
+    nickname = getCredential("(Optional) Enter a nickname for your new user (16 characters max): ", "CredentialManager [5.0.0-alpha]\nRyan Jones @ 2018\n", ignoreAlphanumeric = True, acceptNone = True, maxSize = 16)
+    role = getCredential("(Optional) Enter a role for your new user (16 characters max): ", "CredentialManager [5.0.0-alpha]\nRyan Jones @ 2018\n", ignoreAlphanumeric = True, acceptNone = True, maxSize = 16)
 
     locked = awaitConfirmation("Should the user's account be locked initially? Y to lock, N to leave unlocked.")
 
@@ -436,7 +433,7 @@ class LoginCommand():
     def execute(self, args):
         clearScreen()
         getDatabaseCredentials(len(args) > 0, "database" if len(args) == 0 else args[0])
-        clearScreen("CredentialManager [4.1.0]\nRyan Jones @ 2018\n\nUse the 'help' command for details on how to use commands.\n")
+        clearScreen("CredentialManager [5.0.0-alpha]\nRyan Jones @ 2018\n\nUse the 'help' command for details on how to use commands.\n")
         CredentialManager.setup()
         jutils.storedVariables.update({"logged-in": "true"})
 
@@ -500,7 +497,7 @@ class ResetPasswordCommand(ConnectedCommand):
             print("\nThis user does not exist!\n")
             return
 
-        user.setPasswordHash(convertStringToHash(getCredential("Enter a new password for the user: (16 characters max): ", "CredentialManager [4.1.0]\nRyan Jones @ 2018\n", ignoreAlphanumeric = True, maxSize = 16)))
+        user.setPasswordHash(convertStringToHash(getCredential("Enter a new password for the user: (16 characters max): ", "CredentialManager [5.0.0-alpha]\nRyan Jones @ 2018\n", ignoreAlphanumeric = True, maxSize = 16)))
         user.setLocked(True)
 
         CredentialManager.updateUser(user)
@@ -531,7 +528,7 @@ class SetRoleCommand(ConnectedCommand):
             print("\nThis user does not exist!\n")
             return
 
-        user.setRole(getCredential("Enter a new role for the user: (16 characters max): ", "CredentialManager [4.1.0]\nRyan Jones @ 2018\n", ignoreAlphanumeric = True, acceptNone = True, maxSize = 16, clearAfter = False))
+        user.setRole(getCredential("Enter a new role for the user: (16 characters max): ", "CredentialManager [5.0.0-alpha]\nRyan Jones @ 2018\n", ignoreAlphanumeric = True, acceptNone = True, maxSize = 16, clearAfter = False))
 
         CredentialManager.updateUser(user)
 
@@ -561,7 +558,7 @@ class SetNickCommand(ConnectedCommand):
             print("\nThis user does not exist!\n")
             return
 
-        user.setNickname(getCredential("Enter a new nickname for the user: (16 characters max): ", "CredentialManager [4.1.0]\nRyan Jones @ 2018\n", ignoreAlphanumeric = True, acceptNone = True, maxSize = 16, clearAfter = False))
+        user.setNickname(getCredential("Enter a new nickname for the user: (16 characters max): ", "CredentialManager [5.0.0-alpha]\nRyan Jones @ 2018\n", ignoreAlphanumeric = True, acceptNone = True, maxSize = 16, clearAfter = False))
 
         CredentialManager.updateUser(user)
 
@@ -684,12 +681,8 @@ class LogoutCommand(ConnectedCommand):
 
     def execute(self, args):
         CredentialManager.gracefulExit()
-        global fluidMode
-        if fluidMode:
-            sys.exit()
-        else:
-            jutils.storedVariables.update({"logged-in": "false"})
-            print("\nYou have been logged out of the database.\n")
+        jutils.storedVariables.update({"logged-in": "false"})
+        print("\nYou have been logged out of the database.\n")
 
     def getMinimumArguments(self):
         return 0
@@ -749,13 +742,6 @@ if __name__ == "__main__":
     if "idlelib" in sys.modules:
         print("\n===[Compatibility Error]===\nThis program is only compatible when run through Windows terminal.\n")
         sys.exit()
-    commandList = [ClearCommand(), CreateUserCommand(), DeleteUserCommand(), LockUserCommand(), SetRoleCommand(), SetNickCommand(), ResetPasswordCommand(), UserlistCommand(), DetailUserCommand(), ExitCommand(), LogoutCommand()]
-
-    if fluidMode:
-        getDatabaseCredentials()
-        CredentialManager.setup()
-    else:
-        commandList.append(LoginCommand())
-
+    
     jutils.storedVariables.update({"logged-in": "false"})
-    jutils.runTerminal("CredentialManager [4.1.0]\nRyan Jones @ 2018\n\nUse the 'help' command for details on how to use commands.\n", commandList)
+    jutils.runTerminal("CredentialManager [5.0.0-alpha]\nRyan Jones @ 2018\n\nUse the 'help' command for details on how to use commands.\n", [ClearCommand(), CreateUserCommand(), DeleteUserCommand(), LockUserCommand(), SetRoleCommand(), SetNickCommand(), ResetPasswordCommand(), UserlistCommand(), DetailUserCommand(), ExitCommand(), LoginCommand(), LogoutCommand()])

@@ -1,5 +1,5 @@
 # ==={ JUtils 2 by Ryan Jones }=== #
-# Release Date: 11/11/2018
+# Release Date: 11/17/2018
 
 import hashlib as sha
 import datetime
@@ -14,7 +14,7 @@ class Compatibility():
     """Provides simple methods to aid with compatibility."""
     def getVersion():
         """Returns a tuple providing the major, minor, patch, and pre-release identifier like so: (Major, Minor, Patch, Identifier)"""
-        return (0, 5, 0, "")
+        return (0, 6, 0, "")
 
     def getVersionString():
         """Returns the version in the following format: Major.Minor.Patch(-Pre-release Indetifier)\nThe identifier may be absent if the release is a full release."""
@@ -31,9 +31,42 @@ class Compatibility():
 
 class AdvancedMap():
     """Provides a simple methods to map and filter objects without having to nest and cast excessively."""
-    def __init__(self, results = []):
-        self.results = list(results)
+    def __init__(self, *results):
+        self.results = []
+        for x in results:
+            if type(x) is iter:
+                self.results += list(x)
+            else:
+                self.results += x
 
+    def __iter__(self):
+        for x in self.results:
+            yield x
+
+    def __len__(self):
+        return len(self.results)
+
+    def __add__(self, other):
+        if type(other) is AdvancedMap:
+            self.results = self.results + other.getResults()
+        elif type(other) is list:
+            self.results = self.results + other
+        else:
+            self.results.append(other)
+        return self
+
+    def __iadd__(self, other):
+        if type(other) is AdvancedMap:
+            self.results = self.results + other.getResults()
+        elif type(other) is list:
+            self.results = self.results + other
+        else:
+            self.results.append(other)
+        return self
+
+    def __repr__(self):
+        return "AdvancedMap(%s)" % self.results
+        
     def mapData(self, function, data):
         """Does the same thing as map(), but it casts `data` to a list, the results are stored as a list to be editted or retrieved with other functions.\n'function' - Either a lambda function or a pre-defined function to be used for mapping.\n'data' - Some iterable data structure that can be cast to a list."""
         self.results = list(map(function, list(data)))
@@ -41,11 +74,11 @@ class AdvancedMap():
     
     def mapResults(self, function):
         """Does the same thing as map(), but re-maps the stored results with function given.\n'function' - Either a lambda function or a pre-defined function to be used for mapping."""
-        return self.mapData(function, self.results)
+        return self.mapData(function, self)
 
     def selectivelyMapResults(self, filterFunction, mapFunction):
         """Using 'filterFunction', only the elements filtered for true will be remapped with 'mapFunction'."""
-        plist = Utilities.createEmbeddedList(range(0, len(self.results)), self.results)
+        plist = Utilities.createEmbeddedList(range(0, len(self)), self)
         AdvancedMap(plist).filterResults(lambda x: filterFunction(x[1])).forEach(lambda x: AdvancedMap.__setElementAt(self.results, x[0], mapFunction(x[1])))
         return self
 
@@ -65,7 +98,7 @@ class AdvancedMap():
 
     def forEach(self, function):
         """Executes the given function and passes each stored result as a parameter."""
-        for x in self.results:
+        for x in self:
             function(x)
         return self
 

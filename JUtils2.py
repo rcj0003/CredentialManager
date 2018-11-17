@@ -14,7 +14,7 @@ class Compatibility():
     """Provides simple methods to aid with compatibility."""
     def getVersion():
         """Returns a tuple providing the major, minor, patch, and pre-release identifier like so: (Major, Minor, Patch, Identifier)"""
-        return (0, 6, 2, "")
+        return (0, 7, 0, "")
 
     def getVersionString():
         """Returns the version in the following format: Major.Minor.Patch(-Pre-release Indetifier)\nThe identifier may be absent if the release is a full release."""
@@ -49,8 +49,8 @@ class AdvancedMap():
     def __add__(self, other):
         if type(other) is AdvancedMap:
             self.results = self.results + other.getResults()
-        elif type(other) is list:
-            self.results = self.results + other
+        elif hasattr(other, "__iter__"):
+            self.results = self.results + list(other)
         else:
             self.results.append(other)
         return self
@@ -58,8 +58,8 @@ class AdvancedMap():
     def __iadd__(self, other):
         if type(other) is AdvancedMap:
             self.results = self.results + other.getResults()
-        elif type(other) is list:
-            self.results = self.results + other
+        elif hasattr(x, "__iter__"):
+            self.results = self.results + list(other)
         else:
             self.results.append(other)
         return self
@@ -158,7 +158,7 @@ class Utilities():
 
     def intListToString(intList):
         """Converts an integer list into a string."""
-        return "".join(AdvancedMap().mapData(lambda x: chr(x), intList).getResults())
+        return "".join(AdvancedMap().mapData(lambda x: chr(x), intList))
 
     def xorCrypto(key, data):
         """Encrypts 'data' with 'key' using symmetric XOR encryption."""
@@ -209,11 +209,11 @@ class CommandProcessor2():
 
     def queueCommands(self, commands):
         """Input a list of commands, either parsed or non-parsed, to be queue and executed later."""
-        self.queue += AdvancedMap(commands).selectivelyMapResults(lambda x: type(x) is str, lambda x: Utilities.parseCommand(x)).getResults()
+        self.queue += AdvancedMap(commands).selectivelyMapResults(lambda x: type(x) is str, lambda x: Utilities.parseCommand(x))
 
     def forceQueueCommands(self, commands):
         """Does the same thing as queueCommands, but forces the inputted commands to the front of the queue."""
-        self.queue = AdvancedMap(commands).selectivelyMapResults(lambda x: type(x) is str, lambda x: Utilities.parseCommand(x)).getResults() + self.queue
+        self.queue = AdvancedMap(commands).selectivelyMapResults(lambda x: type(x) is str, lambda x: Utilities.parseCommand(x)) + self.queue
 
     def executeNextInQueue(self):
         """Execute stored commands."""
@@ -257,7 +257,7 @@ class CommandProcessor2():
 
     def registerCommands(self, commands):
         """Input a list of commands to be registered."""
-        self.commands.update(Utilities.createDictionary(AdvancedMap(commands).mapResults(lambda x: x.getName().lower()).getResults(), commands))
+        self.commands.update(Utilities.createDictionary(AdvancedMap(commands).mapResults(lambda x: x.getName().lower()), commands))
         return self
 
     def deregisterCommand(self, command):

@@ -39,3 +39,8 @@
 - Some commands now store results as variables.
 - Updated to JUtils2 v0.5.0.
 - Bug fixes.
+
+### 5.0.0-alpha
+- Fluid-mode has been removed.
+- Updated to JUtils2 0.8.0.
+- There is a slight change in how user data is saved when gracefully closing the connection.

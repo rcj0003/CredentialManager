@@ -14,7 +14,7 @@ class Compatibility():
     """Provides simple methods to aid with compatibility."""
     def getVersion():
         """Returns a tuple providing the major, minor, patch, and pre-release identifier like so: (Major, Minor, Patch, Identifier)"""
-        return (0, 7, 0, "")
+        return (0, 8, 0, "")
 
     def getVersionString():
         """Returns the version in the following format: Major.Minor.Patch(-Pre-release Indetifier)\nThe identifier may be absent if the release is a full release."""
@@ -43,22 +43,24 @@ class AdvancedMap():
         for x in self.results:
             yield x
 
+    def __getitem__(self, key):
+        return self.results[key]
+
+    def __bool__(self):
+        return len(self.results) > 0
+
     def __len__(self):
         return len(self.results)
 
     def __add__(self, other):
-        if type(other) is AdvancedMap:
-            self.results = self.results + other.getResults()
-        elif hasattr(other, "__iter__"):
+        if hasattr(other, "__iter__"):
             self.results = self.results + list(other)
         else:
             self.results.append(other)
         return self
 
     def __iadd__(self, other):
-        if type(other) is AdvancedMap:
-            self.results = self.results + other.getResults()
-        elif hasattr(x, "__iter__"):
+        if hasattr(other, "__iter__"):
             self.results = self.results + list(other)
         else:
             self.results.append(other)

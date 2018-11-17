@@ -14,7 +14,7 @@ class Compatibility():
     """Provides simple methods to aid with compatibility."""
     def getVersion():
         """Returns a tuple providing the major, minor, patch, and pre-release identifier like so: (Major, Minor, Patch, Identifier)"""
-        return (0, 6, 0, "")
+        return (0, 6, 1, "")
 
     def getVersionString():
         """Returns the version in the following format: Major.Minor.Patch(-Pre-release Indetifier)\nThe identifier may be absent if the release is a full release."""
@@ -37,7 +37,7 @@ class AdvancedMap():
             if type(x) is iter:
                 self.results += list(x)
             else:
-                self.results += x
+                self.results.append(x)
 
     def __iter__(self):
         for x in self.results:
